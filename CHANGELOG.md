@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.1.1 - 2026-10-29
+
+- First PyPI release (`pipx install depdrift`).
+- `depdrift review old new` is now accepted as well as bare positionals.
+- Rule id in the README corrected to `diff-size` (it advertised `large-diff`).
+- Release pipeline via PyPI trusted publishing, plus first-time contributor
+  auto-approval.
 ## v0.1.0 - 2026-10-29
 
 - `depdrift review old.lock new.lock` summarizes added, removed and changed
