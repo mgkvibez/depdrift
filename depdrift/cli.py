@@ -26,6 +26,12 @@ def main(argv: list[str] | None = None) -> int:
         help="exit non-zero when a finding at this severity or worse exists",
     )
     parser.add_argument("--version", action="version", version=f"depdrift {__version__}")
+    # `depdrift review old new` reads better than bare positionals; accept both.
+    if argv is None:
+        argv = sys.argv[1:]
+    if argv and argv[0] == "review":
+        argv = argv[1:]
+
     args = parser.parse_args(argv)
 
     new_path = args.new or "package-lock.json"

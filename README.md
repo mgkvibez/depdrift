@@ -1,88 +1,64 @@
 # depdrift
 
-Your lockfile changed by 400 lines. This tells you what actually changed, and which parts are dangerous.
+**Review what actually changed between two lockfiles, and what is risky about it.** One markdown report: typosquats, install scripts, git dependencies, mirror registries, version jumps. Local, offline, no API key.
 
-```bash
-git show HEAD~1:package-lock.json > /tmp/before.json
-depdrift /tmp/before.json package-lock.json
-```
+[![ci](https://github.com/mgkvibez/depdrift/actions/workflows/ci.yml/badge.svg)](https://github.com/mgkvibez/depdrift/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
+[![stars](https://img.shields.io/github/stars/mgkvibez/depdrift?style=flat&color=yellow)](https://github.com/mgkvibez/depdrift/stargazers)
 
-```
-# Dependency review
+![depdrift demo](docs/demo/depdrift.svg)
 
-- added 3, removed 0, changed 1
-- worst finding: **critical**
-
-| severity | package | version | rule | detail |
-|---|---|---|---|---|
-| critical | expresss | 1.0.3 | typosquat | name is within edit distance of popular package 'express' |
-| high | expresss | 1.0.3 | install-script | package declares an install/postinstall script that runs on npm install |
-| high | shady-pkg | 0.0.1 | git-dependency | resolves to a git reference instead of a published tarball |
-| medium | express | 5.0.0 | major-version-jump | 4.18.2 -> 5.0.0: major version changed, read the changelog |
-| medium | mirrored-pkg | 2.1.0 | non-default-registry | resolves from 'registry.evil-mirror.dev' instead of registry.npmjs.org |
-```
+The demo above is a fixture lockfile. The pattern it catches is the real thing: `expresss` instead of `express`, carrying an install script, plus a package resolved from a mirror that is not npm.
 
 ## Install
 
 ```bash
-pipx install depdrift
+pipx install git+https://github.com/mgkvibez/depdrift.git
 ```
 
-Local only: no registry calls, no API key, no telemetry. Python 3.9+.
-
-## Usage
+## Three ways to use it
 
 ```bash
-depdrift before.json after.json          # markdown report
-depdrift before.json after.json --json   # for CI and agents
-depdrift before.json after.json --fail-on high   # exit 2 when something is high or critical
+# 1. What changed in this PR's lockfile?
+git show origin/main:package-lock.json > /tmp/before.json
+depdrift review /tmp/before.json package-lock.json
+
+# 2. Gate a CI job on high severity and above
+depdrift review /tmp/before.json package-lock.json --fail-on high
+
+# 3. Machine-readable, for a bot or an agent skill
+depdrift review /tmp/before.json package-lock.json --json
 ```
 
-Typical CI use, on a dependency-update PR:
+## Why it exists
 
-```yaml
-- run: git show origin/main:package-lock.json > /tmp/before.json
-- run: depdrift /tmp/before.json package-lock.json --fail-on high
-```
+A lockfile diff is thousands of lines and nobody reads it. That is exactly the surface a supply-chain attack wants: a package that looks like one you trust, a postinstall script, a tarball from somewhere else. Reviewers approve it because "it's just a lockfile bump".
 
-## What it checks
-
-| Rule | Severity | Why it matters |
-|---|---|---|
-| `typosquat` | critical | name is within edit distance 1-2 of a popular package; the classic supply-chain trap |
-| `install-script` | high | the package runs code on install, before you ever require it |
-| `git-dependency` | high | a git ref is mutable; the tarball you audited is not the one you get |
-| `non-default-registry` | medium | the package resolves from a mirror that is not npmjs |
-| `major-version-jump` | medium | version diff crossed a major boundary |
-| `diff-size` | low | more than 40 new packages in one change |
+depdrift answers the only two questions that matter after a dependency change: **what arrived**, and **what about it deserves a human's eyes**.
 
 ## How it works
 
-1. Parse both lockfiles. `lockfileVersion` 2 and 3 use the `packages` map; version 1 walks nested
-   `dependencies`. Workspace links are skipped.
-2. Diff by package name: added, removed, version-changed.
-3. Run every rule over added packages, and over changed packages at their new version.
-4. Sort by severity, render markdown or JSON, set an exit code if `--fail-on` is given.
+Parses npm `package-lock.json` (lockfileVersion 1, 2 and 3) into a package map and diffs the two.
 
-The typosquat check uses a bundled list of ~150 popular package names, so it works offline. Edit
-`depdrift/popular.py` to match the ecosystem you actually ship.
+| Rule | Severity | Fires when |
+|---|---|---|
+| `typosquat` | critical | new name is within edit distance 2 of a popular package and is not it |
+| `install-script` | high | new package declares an install/postinstall script |
+| `git-dependency` | high | resolved from a git ref instead of a published tarball |
+| `non-default-registry` | medium | resolved from a host that is not `registry.npmjs.org` |
+| `major-version-jump` | medium | an existing package crosses a major version |
+| `large-diff` | low | more than 50 packages changed at once |
 
-## Honest limits
+The popular-name list ships in `depdrift/popular.py`, so nothing leaves the machine. No registry calls, no token, no telemetry. Read the report and decide.
 
-- npm lockfiles only today. `pnpm-lock.yaml`, `yarn.lock`, `poetry.lock`, `Cargo.lock` are not parsed.
-- It does not know CVEs. A package can pass every rule here and still be vulnerable; run your
-  scanner as well.
-- Typosquat distance is a heuristic. Close names are a reason to look, not proof of malice.
-- "No findings" means "no known shape fired", never "safe".
+## Contributing
 
-## Tests
+Read [CONTRIBUTING.md](CONTRIBUTING.md). Tests:
 
 ```bash
 python -m pytest -q
 ```
-
-Ten tests: diff accounting, each rule, clean-diff behaviour, v1 lockfile layout, and the
-distance helpers.
 
 ## License
 
