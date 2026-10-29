@@ -48,7 +48,7 @@ Parses npm `package-lock.json` (lockfileVersion 1, 2 and 3) into a package map a
 | `git-dependency` | high | resolved from a git ref instead of a published tarball |
 | `non-default-registry` | medium | resolved from a host that is not `registry.npmjs.org` |
 | `major-version-jump` | medium | an existing package crosses a major version |
-| `large-diff` | low | more than 50 packages changed at once |
+| `diff-size` | low | more than 50 packages changed at once |
 
 The popular-name list ships in `depdrift/popular.py`, so nothing leaves the machine. No registry calls, no token, no telemetry. Read the report and decide.
 
