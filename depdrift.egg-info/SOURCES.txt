@@ -1,0 +1,15 @@
+LICENSE
+README.md
+pyproject.toml
+depdrift/__init__.py
+depdrift/cli.py
+depdrift/lockfile.py
+depdrift/popular.py
+depdrift/review.py
+depdrift.egg-info/PKG-INFO
+depdrift.egg-info/SOURCES.txt
+depdrift.egg-info/dependency_links.txt
+depdrift.egg-info/entry_points.txt
+depdrift.egg-info/requires.txt
+depdrift.egg-info/top_level.txt
+tests/test_depdrift.py

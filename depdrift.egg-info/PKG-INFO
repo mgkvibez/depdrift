@@ -1,0 +1,84 @@
+Metadata-Version: 2.4
+Name: depdrift
+Version: 0.1.0
+Summary: Review what actually changed between two lockfiles, and what is risky about it.
+Author: mgkvibez
+License: MIT
+Keywords: supply-chain,lockfile,npm,security,dependencies,developer-tools
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Security
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest>=8; extra == "dev"
+Dynamic: license-file
+
+# depdrift
+
+**Review what actually changed between two lockfiles, and what is risky about it.** One markdown report: typosquats, install scripts, git dependencies, mirror registries, version jumps. Local, offline, no API key.
+
+[![ci](https://github.com/mgkvibez/depdrift/actions/workflows/ci.yml/badge.svg)](https://github.com/mgkvibez/depdrift/actions/workflows/ci.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
+[![stars](https://img.shields.io/github/stars/mgkvibez/depdrift?style=flat&color=yellow)](https://github.com/mgkvibez/depdrift/stargazers)
+
+![depdrift demo](docs/demo/depdrift.svg)
+
+The demo above is a fixture lockfile. The pattern it catches is the real thing: `expresss` instead of `express`, carrying an install script, plus a package resolved from a mirror that is not npm.
+
+## Install
+
+```bash
+pipx install git+https://github.com/mgkvibez/depdrift.git
+```
+
+## Three ways to use it
+
+```bash
+# 1. What changed in this PR's lockfile?
+git show origin/main:package-lock.json > /tmp/before.json
+depdrift review /tmp/before.json package-lock.json
+
+# 2. Gate a CI job on high severity and above
+depdrift review /tmp/before.json package-lock.json --fail-on high
+
+# 3. Machine-readable, for a bot or an agent skill
+depdrift review /tmp/before.json package-lock.json --json
+```
+
+## Why it exists
+
+A lockfile diff is thousands of lines and nobody reads it. That is exactly the surface a supply-chain attack wants: a package that looks like one you trust, a postinstall script, a tarball from somewhere else. Reviewers approve it because "it's just a lockfile bump".
+
+depdrift answers the only two questions that matter after a dependency change: **what arrived**, and **what about it deserves a human's eyes**.
+
+## How it works
+
+Parses npm `package-lock.json` (lockfileVersion 1, 2 and 3) into a package map and diffs the two.
+
+| Rule | Severity | Fires when |
+|---|---|---|
+| `typosquat` | critical | new name is within edit distance 2 of a popular package and is not it |
+| `install-script` | high | new package declares an install/postinstall script |
+| `git-dependency` | high | resolved from a git ref instead of a published tarball |
+| `non-default-registry` | medium | resolved from a host that is not `registry.npmjs.org` |
+| `major-version-jump` | medium | an existing package crosses a major version |
+| `diff-size` | low | more than 50 packages changed at once |
+
+The popular-name list ships in `depdrift/popular.py`, so nothing leaves the machine. No registry calls, no token, no telemetry. Read the report and decide.
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md). Tests:
+
+```bash
+python -m pytest -q
+```
+
+## License
+
+MIT. See [LICENSE](LICENSE).
