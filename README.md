@@ -4,6 +4,7 @@
 
 [![ci](https://github.com/mgkvibez/depdrift/actions/workflows/ci.yml/badge.svg)](https://github.com/mgkvibez/depdrift/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![PyPI](https://img.shields.io/pypi/v/depdrift.svg)](https://pypi.org/project/depdrift/)
 [![python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](pyproject.toml)
 [![stars](https://img.shields.io/github/stars/mgkvibez/depdrift?style=flat&color=yellow)](https://github.com/mgkvibez/depdrift/stargazers)
 
