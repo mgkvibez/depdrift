@@ -15,9 +15,10 @@ The demo above is a fixture lockfile. The pattern it catches is the real thing: 
 ## Install
 
 ```bash
-pipx install git+https://github.com/mgkvibez/depdrift.git
+pipx install depdrift
 ```
 
+Also on [PyPI](https://pypi.org/project/depdrift/). From source: `git clone && pip install -e ".[dev]"`.
 ## Three ways to use it
 
 ```bash
