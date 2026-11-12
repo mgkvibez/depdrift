@@ -9,6 +9,7 @@ import sys
 from . import __version__
 from .lockfile import load
 from .review import SEVERITY_ORDER, review, to_markdown
+from .sarif import to_sarif
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -18,7 +19,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("old", help="lockfile before the change")
     parser.add_argument("new", nargs="?", help="lockfile after the change (default: current package-lock.json)")
-    parser.add_argument("--json", action="store_true", help="machine-readable output")
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument("--json", action="store_true", help="machine-readable output")
+    output_group.add_argument("--sarif", action="store_true", help="SARIF 2.1.0 output")
     parser.add_argument(
         "--fail-on",
         choices=["none", "low", "medium", "high", "critical"],
@@ -45,6 +48,8 @@ def main(argv: list[str] | None = None) -> int:
             "worst": result.worst,
             "findings": [f.as_dict() for f in result.findings],
         }, indent=2))
+    elif args.sarif:
+        print(json.dumps(to_sarif(result), indent=2))
     else:
         print(to_markdown(result))
 

@@ -33,6 +33,22 @@ depdrift review /tmp/before.json package-lock.json --fail-on high
 depdrift review /tmp/before.json package-lock.json --json
 ```
 
+## SARIF output
+
+Use SARIF 2.1.0 to pass findings to a code scanning service:
+
+```bash
+depdrift review old-package-lock.json package-lock.json --sarif > depdrift.sarif
+```
+
+`--sarif` and `--json` are mutually exclusive. `--fail-on` keeps its existing
+exit-code behavior and still writes the SARIF report. Findings point at the
+lockfile; package line positions are not inferred.
+
+Windows relative paths and UNC paths use URI separators. Windows drive-relative
+or root-relative strings must be made fully qualified by the caller before
+rendering; they are rejected rather than assigned an invented drive or folder.
+
 ## Why it exists
 
 A lockfile diff is thousands of lines and nobody reads it. That is exactly the surface a supply-chain attack wants: a package that looks like one you trust, a postinstall script, a tarball from somewhere else. Reviewers approve it because "it's just a lockfile bump".
@@ -45,12 +61,12 @@ Parses npm `package-lock.json` (lockfileVersion 1, 2 and 3) into a package map a
 
 | Rule | Severity | Fires when |
 |---|---|---|
-| `typosquat` | critical | new name is within edit distance 2 of a popular package and is not it |
-| `install-script` | high | new package declares an install/postinstall script |
-| `git-dependency` | high | resolved from a git ref instead of a published tarball |
-| `non-default-registry` | medium | resolved from a host that is not `registry.npmjs.org` |
-| `major-version-jump` | medium | an existing package crosses a major version |
-| `diff-size` | low | more than 50 packages changed at once |
+| <a id="typosquat"></a>`typosquat` | critical | new name is within edit distance 2 of a popular package and is not it |
+| <a id="install-script"></a>`install-script` | high | new package declares an install/postinstall script |
+| <a id="git-dependency"></a>`git-dependency` | high | resolved from a git ref instead of a published tarball |
+| <a id="non-default-registry"></a>`non-default-registry` | medium | resolved from a host that is not `registry.npmjs.org` |
+| <a id="major-version-jump"></a>`major-version-jump` | medium | an existing package crosses a major version |
+| <a id="diff-size"></a>`diff-size` | low | more than 50 packages changed at once |
 
 The popular-name list ships in `depdrift/popular.py`, so nothing leaves the machine. No registry calls, no token, no telemetry. Read the report and decide.
 
