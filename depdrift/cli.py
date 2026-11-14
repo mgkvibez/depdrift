@@ -49,7 +49,12 @@ def main(argv: list[str] | None = None) -> int:
             "findings": [f.as_dict() for f in result.findings],
         }, indent=2))
     elif args.sarif:
-        print(json.dumps(to_sarif(result), indent=2))
+        try:
+            sarif_output = to_sarif(result)
+        except ValueError as exc:
+            print(f"depdrift: error: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(sarif_output, indent=2))
     else:
         print(to_markdown(result))
 
